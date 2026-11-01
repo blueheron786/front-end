@@ -60,6 +60,7 @@
 			<hr class="my-2" />
 			<div class="mb-4 flex flex-col gap-2">
 				<Button variant="link" href="/stats" class="px-0 text-left">Statistics</Button>
+				<Button variant="link" href="/dumps" class="px-0 text-left">Index dumps</Button>
 			</div>
 			<Options />
 		</div>
