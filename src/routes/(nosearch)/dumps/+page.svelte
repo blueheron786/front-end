@@ -27,18 +27,29 @@
 		timeZone: 'UTC'
 	});
 
-	let copied = $state(false);
+	let shaInput: HTMLInputElement | undefined = $state();
+	let copyStatus: 'idle' | 'copied' | 'failed' = $state('idle');
 	let copyTimer: ReturnType<typeof setTimeout> | undefined;
 
+	$effect(() => () => clearTimeout(copyTimer));
+
 	async function copyChecksum(sha: string) {
+		clearTimeout(copyTimer);
 		try {
 			await navigator.clipboard.writeText(sha);
+			copyStatus = 'copied';
+			copyTimer = setTimeout(() => (copyStatus = 'idle'), 2000);
 		} catch {
-			return;
+			// No clipboard permission, or not a secure context: leave it selected to copy by hand.
+			copyStatus = 'failed';
+			shaInput?.focus();
+			shaInput?.select();
 		}
-		copied = true;
-		clearTimeout(copyTimer);
-		copyTimer = setTimeout(() => (copied = false), 2000);
+	}
+
+	function finishedLabel(finished: string) {
+		const date = new Date(finished);
+		return `${shortDateFormat.format(date)}, ${timeFormat.format(date)} UTC`;
 	}
 
 	function shortSha(sha: string) {
@@ -130,6 +141,7 @@
 					<div class="flex flex-wrap gap-2">
 						<input
 							id="sha"
+							bind:this={shaInput}
 							readonly
 							value={latest.sha256}
 							onfocus={(e) => e.currentTarget.select()}
@@ -140,9 +152,16 @@
 							onclick={() => copyChecksum(latest.sha256)}
 							class="bg-card hover:bg-accent min-h-11 rounded-lg border px-4 font-semibold hover:cursor-pointer"
 						>
-							{copied ? 'Copied' : 'Copy'}
+							Copy
 						</button>
 					</div>
+					<p class="text-unemphasized-2 min-h-5 text-sm" aria-live="polite">
+						{#if copyStatus === 'copied'}
+							Copied to the clipboard.
+						{:else if copyStatus === 'failed'}
+							Couldn't copy automatically. It's selected, so copy it with your keyboard.
+						{/if}
+					</p>
 				</div>
 
 				<p class="text-unemphasized-2 text-sm">
@@ -174,7 +193,7 @@
 						{#each data.dumps as dump (dump.key)}
 							<tr class="[&:last-child>td]:border-b-0">
 								<td class="border-b px-5 py-3.5 font-semibold whitespace-nowrap">
-									{shortDateFormat.format(new Date(dump.finished))}
+									{finishedLabel(dump.finished)}
 								</td>
 								<td class="border-b px-5 py-3.5 font-mono text-sm whitespace-nowrap"
 									>{dump.index_name}</td
@@ -195,16 +214,12 @@
 									<a
 										href={dump.manifest_url}
 										class="text-unemphasized-2 hover:text-foreground inline-flex min-h-11 items-center px-2.5 font-semibold"
-										aria-label="Manifest for the dump finished {shortDateFormat.format(
-											new Date(dump.finished)
-										)}">Manifest</a
+										aria-label="Manifest for {fileName(dump)}">Manifest</a
 									>
 									<a
 										href={dump.url}
 										class="inline-flex min-h-11 items-center gap-1.5 px-2.5 font-semibold hover:opacity-75"
-										aria-label="Download the dump finished {shortDateFormat.format(
-											new Date(dump.finished)
-										)}"
+										aria-label="Download {fileName(dump)}"
 									>
 										<RiDownloadLine class="size-4" aria-hidden="true" />
 										Download
@@ -233,13 +248,13 @@
 				class="min-w-0 overflow-x-auto rounded-xl border bg-[#111214] p-5 font-mono text-sm leading-relaxed text-[#E8EAED]"><span
 					class="text-[#9AA0A6]"># download</span
 				>
-curl -LO {latest.url}
+curl -LO '{latest.url}'
 
-<span class="text-[#9AA0A6]"># verify</span>
-echo "{latest.sha256}  {fileName(latest)}" | sha256sum -c
+<span class="text-[#9AA0A6]"># verify (macOS: shasum -a 256 -c)</span>
+echo '{latest.sha256}  {fileName(latest)}' | sha256sum -c
 
 <span class="text-[#9AA0A6]"># decompress</span>
-zstd -d {fileName(latest)} -o {latest.index_name}</pre>
+zstd -d '{fileName(latest)}' -o '{latest.index_name}'</pre>
 		</section>
 	{/if}
 </main>
