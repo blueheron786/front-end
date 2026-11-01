@@ -35,6 +35,7 @@
 		<div class="hidden md:contents">
 			<Button variant="link" href="/membership" class="px-2">Membership</Button>
 			<Button variant="link" href="/stats" class="px-2">Statistics</Button>
+			<Button variant="link" href="/dumps" class="px-2">Index dumps</Button>
 			<SignInButton loginStatus={data.loginStatus} />
 		</div>
 		<div class="contents">
