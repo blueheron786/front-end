@@ -71,12 +71,19 @@ export const load: PageServerLoad = async ({ cookies, locals, url }) => {
 	const errors: { count: number; items: CrawlerError[] } = errorsRes.ok
 		? await errorsRes.json()
 		: { count: 0, items: [] };
+	const pageCount = Math.max(1, Math.ceil(errors.count / ERRORS_PER_PAGE));
+
+	// Errors are trimmed as new ones arrive, so a bookmarked page can fall off the end.
+	if (page > pageCount) {
+		throw redirect(302, `?page=${pageCount}`);
+	}
 
 	return {
 		devices,
 		errors: errors.items,
 		errorCount: errors.count,
 		page,
-		pageCount: Math.max(1, Math.ceil(errors.count / ERRORS_PER_PAGE))
+		pageCount,
+		loadFailed: !devicesRes.ok || !errorsRes.ok
 	};
 };

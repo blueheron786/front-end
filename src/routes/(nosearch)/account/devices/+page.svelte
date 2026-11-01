@@ -21,6 +21,13 @@
 		</Card.Root>
 	{/if}
 
+	{#if data.loadFailed}
+		<Card.Root role="alert" class="p-4 outline-red-100 outline-solid dark:outline-red-900">
+			Some of this page could not be loaded. Devices and crawler errors need a verified email
+			address; if yours is verified, try again shortly.
+		</Card.Root>
+	{/if}
+
 	{#if data.devices.length > 0}
 		<ul class="flex flex-col gap-2">
 			{#each data.devices as device (device.id)}
