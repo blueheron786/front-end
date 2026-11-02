@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { Button } from '@/components/ui/button';
 	import * as Card from '@/components/ui/card';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
@@ -34,9 +35,9 @@
 				<li class="bg-muted flex flex-row items-center gap-2 p-4">
 					<div class="bg-card text-accent-text flex aspect-square items-center p-2">
 						{#if vote.vote_type === 'upvote'}
-							<RiArrowUpSLine class="size-8" />
+							<RiArrowUpSLine class="size-8" aria-label="Upvote" />
 						{:else}
-							<RiArrowDownSLine class="size-8" />
+							<RiArrowDownSLine class="size-8" aria-label="Downvote" />
 						{/if}
 					</div>
 					<div class="flex min-w-0 flex-col gap-1">
@@ -53,6 +54,7 @@
 							{#snippet child({ props })}
 								<Button
 									{...props}
+									aria-label={`Delete your ${vote.vote_type} for ${vote.url}`}
 									variant="destructive"
 									size="icon"
 									class="ml-auto size-9 shrink-0 hover:-rotate-20"
@@ -72,7 +74,7 @@
 							</AlertDialog.Header>
 							<AlertDialog.Footer>
 								<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-								<form method="post" action="?/deleteVote">
+								<form method="post" action="?/deleteVote" use:enhance>
 									<input type="hidden" name="url" value={vote.url} />
 									<input type="hidden" name="query" value={vote.query} />
 									<AlertDialog.Action class="bg-red-600" type="submit"

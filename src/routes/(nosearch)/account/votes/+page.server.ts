@@ -30,7 +30,8 @@ export const actions: Actions = {
 			body: JSON.stringify({ url, query })
 		});
 
-		if (!res.ok) {
+		// 404 means it was already deleted, say from another tab, which is what the user wanted.
+		if (!res.ok && res.status !== 404) {
 			return { success: false, error: 'Failed to delete the vote.' };
 		}
 
