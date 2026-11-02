@@ -1,9 +1,14 @@
 <script>
+	import { describeMonths, wholeMonthsBetween } from '$lib/member-duration';
+
 	export let data;
 
 	// Compute a scale so the tallest day fills the chart container.
 	$: maxIndexed = Math.max(...data.chartData.indexed, 1);
 	$: scaledIndexed = data.chartData.indexed.map((v) => (v / maxIndexed) * 100);
+
+	$: joined = data.dateJoined ? new Date(data.dateJoined) : null;
+	$: signedUpAgo = joined ? describeMonths(wholeMonthsBetween(joined, new Date())) : null;
 </script>
 
 <div class="min-h-screen">
@@ -16,9 +21,27 @@
 	<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			<div class="bg-card rounded-lg p-6 shadow">
-				<h2 class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">Member Since</h2>
-				<p class="text-3xl font-bold">{new Date(data.dateJoined).getFullYear()}</p>
+				<h2 class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">Signed Up</h2>
+				{#if joined}
+					<p class="text-3xl font-bold">
+						{signedUpAgo}{signedUpAgo === 'less than a month' ? '' : ' ago'}
+					</p>
+					<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">in {joined.getUTCFullYear()}</p>
+				{:else}
+					<p class="text-3xl font-bold">&mdash;</p>
+				{/if}
 			</div>
+			{#if data.supporterMonths}
+				<div class="bg-card rounded-lg p-6 shadow">
+					<h2 class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">
+						Paying Supporter
+					</h2>
+					<p class="text-3xl font-bold">{describeMonths(data.supporterMonths)}</p>
+					<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+						At any tier, adding up every spell you've supported Mwmbl
+					</p>
+				</div>
+			{/if}
 			<div class="bg-card rounded-lg p-6 shadow">
 				<h2 class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">
 					Total Results Indexed
