@@ -9,8 +9,6 @@
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import BottomLinks from '@/components/custom/brand/BottomLinks.svelte';
 
-	import RiArrowUpSLine from '~icons/ri/arrow-up-s-line';
-	import RiArrowDownSLine from '~icons/ri/arrow-down-s-line';
 	import RiDeleteBin5Line from '~icons/ri/delete-bin-5-line';
 
 	const { data, form } = $props();
@@ -387,67 +385,6 @@
 
 		<hr class="my-4" />
 
-		<h3 class="text-xl">My votes</h3>
-		{#if data.votes}
-			<ul class="mt-4 flex flex-col gap-4">
-				{#each data.votes.items as vote}
-					<li class="bg-muted flex flex-row items-center gap-2 p-4">
-						<div class="bg-card text-accent-text flex aspect-square items-center p-2">
-							{#if vote.vote_type === 'upvote'}
-								<RiArrowUpSLine class="size-8" />
-							{:else}
-								<RiArrowDownSLine class="size-8" />
-							{/if}
-						</div>
-						<div class="flex flex-col gap-1">
-							<Button variant="link" class="h-fit py-0 font-medium" href={vote.url} target="_blank"
-								>{vote.url}</Button
-							>
-							<p class="px-4">for query: {vote.query}</p>
-						</div>
-						<AlertDialog.Root>
-							<AlertDialog.Trigger>
-								{#snippet child({ props })}
-									<Button
-										{...props}
-										variant="destructive"
-										size="icon"
-										class="ml-auto size-9 hover:-rotate-20"
-									>
-										<RiDeleteBin5Line class="size-6" />
-									</Button>
-								{/snippet}
-							</AlertDialog.Trigger>
-							<AlertDialog.Content>
-								<AlertDialog.Header>
-									<AlertDialog.Title>Delete vote?</AlertDialog.Title>
-									<AlertDialog.Description>
-										This permanently removes your {vote.vote_type} for <code>{vote.url}</code> on
-										query <code>{vote.query}</code>.
-									</AlertDialog.Description>
-								</AlertDialog.Header>
-								<AlertDialog.Footer>
-									<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-									<form method="post" action="?/deleteVote">
-										<input type="hidden" name="url" value={vote.url} />
-
-										<input type="hidden" name="query" value={vote.query} />
-										<AlertDialog.Action class="bg-red-600" type="submit"
-											>Delete vote</AlertDialog.Action
-										>
-									</form>
-								</AlertDialog.Footer>
-							</AlertDialog.Content>
-						</AlertDialog.Root>
-					</li>
-				{/each}
-			</ul>
-		{:else}
-			<p>No votes yet.</p>
-		{/if}
-
-		<hr class="my-4" />
-
 		<h3 class="text-xl">Devices</h3>
 
 		{#if data.devices.length > 0}
@@ -523,6 +460,14 @@
 		{:else if data.hasAgreedToTerms}
 			<p class="text-sm">No devices yet.</p>
 		{/if}
+
+		<hr class="my-4" />
+
+		<h3 class="text-xl">My votes</h3>
+		<p class="text-sm">
+			See <a href="/account/votes" class="text-accent-text underline">the results you've voted on</a
+			>, and remove any votes you've changed your mind about.
+		</p>
 
 		<hr class="my-4" />
 
