@@ -19,14 +19,16 @@
 	</header>
 
 	<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+		<div
+			class="grid gap-6 sm:grid-cols-2 {data.supporterMonths ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}"
+		>
 			<div class="bg-card rounded-lg p-6 shadow">
 				<h2 class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">Signed Up</h2>
 				{#if joined}
-					<p class="text-3xl font-bold">
-						{signedUpAgo}{signedUpAgo === 'less than a month' ? '' : ' ago'}
+					<p class="text-3xl font-bold">{signedUpAgo}</p>
+					<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+						ago, in {joined.getUTCFullYear()}
 					</p>
-					<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">in {joined.getUTCFullYear()}</p>
 				{:else}
 					<p class="text-3xl font-bold">&mdash;</p>
 				{/if}
@@ -52,6 +54,9 @@
 				<h2 class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">Indexed Today</h2>
 				<p class="text-3xl font-bold">{data.myIndexedToday.toLocaleString()}</p>
 			</div>
+		</div>
+
+		<div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			<div class="bg-brand-gradient rounded-lg p-[3px] shadow">
 				<div class="bg-card h-full rounded-[5px] p-6">
 					<h2 class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">Seed Searches</h2>
