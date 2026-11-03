@@ -195,20 +195,26 @@
 		most once an hour per crawler.
 	</p>
 
-	{#if data.errors.length > 0}
-		<ul class="mt-2 flex flex-col gap-2">
-			{#each data.errors as error (error.id)}
-				<li class="bg-muted flex flex-col gap-1 p-4">
-					<span class="font-medium break-all">{error.exception_type}</span>
-					<span class="font-mono text-sm break-words whitespace-pre-wrap">{error.message}</span>
-					<span class="font-mono text-xs break-all">{error.location}</span>
-					<span class="text-xs">
-						{new Date(error.created_at).toLocaleString()} · {error.device_name} · {error.context} · crawler
-						{error.crawler_version}
-					</span>
-				</li>
-			{/each}
-		</ul>
+	{#if data.errorGroups.length > 0}
+		{#each data.errorGroups as group (group.name)}
+			<h4 class="mt-3 text-lg font-medium break-all">
+				{group.name}
+				<span class="text-sm font-normal">({group.items.length})</span>
+			</h4>
+			<ul class="flex flex-col gap-2">
+				{#each group.items as error (error.id)}
+					<li class="bg-muted flex flex-col gap-1 p-4">
+						<span class="font-medium break-all">{error.exception_type}</span>
+						<span class="font-mono text-sm break-words whitespace-pre-wrap">{error.message}</span>
+						<span class="font-mono text-xs break-all">{error.location}</span>
+						<span class="text-xs">
+							{new Date(error.created_at).toLocaleString()} · {error.context} · crawler
+							{error.crawler_version}
+						</span>
+					</li>
+				{/each}
+			</ul>
+		{/each}
 
 		{#if data.pageCount > 1}
 			<nav class="mt-2 flex items-center justify-between text-sm" aria-label="Error pages">

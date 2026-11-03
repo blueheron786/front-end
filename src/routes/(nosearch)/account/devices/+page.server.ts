@@ -23,6 +23,7 @@ type DeviceActivity = {
 type CrawlerError = {
 	id: number;
 	device_name: string;
+	device_display_name: string;
 	context: string;
 	exception_type: string;
 	message: string;
@@ -109,10 +110,20 @@ export const load: PageServerLoad = async ({ cookies, locals, url }) => {
 		throw redirect(302, `?page=${pageCount}`);
 	}
 
+	// Newest-first within each group, and groups ordered by their newest error.
+	const groups = new Map<string, CrawlerError[]>();
+	for (const error of errors.items) {
+		groups.set(error.device_display_name, [
+			...(groups.get(error.device_display_name) ?? []),
+			error
+		]);
+	}
+	const errorGroups = [...groups].map(([name, items]) => ({ name, items }));
+
 	return {
 		devices,
 		activityByDevice,
-		errors: errors.items,
+		errorGroups,
 		errorCount: errors.count,
 		page,
 		pageCount,
