@@ -1,8 +1,12 @@
 import { API_BASE as API } from '$lib/api';
+import { groupErrorsByDevice } from '$lib/devices';
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 const ERRORS_PER_PAGE = 20;
+
+// Interpolated into an API path, so anything but digits could reach another endpoint.
+const DEVICE_ID = /^\d+$/;
 
 type Device = {
 	id: number;
@@ -12,9 +16,18 @@ type Device = {
 	last_seen: string;
 };
 
+type DeviceActivity = {
+	device_id: number;
+	results_total: number;
+	results_last_hour: number;
+	results_last_24h: number;
+	results_daily: { date: string; results: number }[];
+};
+
 type CrawlerError = {
 	id: number;
 	device_name: string;
+	device_display_name: string;
 	context: string;
 	exception_type: string;
 	message: string;
@@ -29,7 +42,7 @@ export const actions: Actions = {
 		const deviceId = data.get('deviceId');
 		const deviceName = (data.get('deviceName') as string | null)?.trim();
 
-		if (!deviceId || !deviceName) {
+		if (typeof deviceId !== 'string' || !DEVICE_ID.test(deviceId) || !deviceName) {
 			return { success: false, error: 'Device ID and name are required.' };
 		}
 
@@ -47,6 +60,26 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+
+	hideDevice: async ({ request, cookies }) => {
+		const data = await request.formData();
+		const deviceId = data.get('deviceId');
+
+		if (typeof deviceId !== 'string' || !DEVICE_ID.test(deviceId)) {
+			return { success: false, error: 'Device ID is required.' };
+		}
+
+		const res = await fetch(`${API}/api/v1/platform/devices/${deviceId}`, {
+			method: 'DELETE',
+			headers: { Authorization: 'Bearer ' + cookies.get('accessToken') }
+		});
+
+		if (!res.ok) {
+			return { success: false, error: 'Failed to remove device.' };
+		}
+
+		return { success: true };
 	}
 };
 
@@ -59,8 +92,9 @@ export const load: PageServerLoad = async ({ cookies, locals, url }) => {
 	const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 	const headers = { Authorization: 'Bearer ' + cookies.get('accessToken') };
 
-	const [devicesRes, errorsRes] = await Promise.all([
+	const [devicesRes, activityRes, errorsRes] = await Promise.all([
 		fetch(`${API}/api/v1/platform/devices/`, { headers }),
+		fetch(`${API}/api/v1/platform/devices/activity/`, { headers }),
 		fetch(
 			`${API}/api/v1/platform/crawler-errors/?limit=${ERRORS_PER_PAGE}&offset=${(page - 1) * ERRORS_PER_PAGE}`,
 			{ headers }
@@ -68,6 +102,8 @@ export const load: PageServerLoad = async ({ cookies, locals, url }) => {
 	]);
 
 	const devices: Device[] = devicesRes.ok ? await devicesRes.json() : [];
+	const activity: DeviceActivity[] = activityRes.ok ? await activityRes.json() : [];
+	const activityByDevice = Object.fromEntries(activity.map((a) => [a.device_id, a]));
 	const errors: { count: number; items: CrawlerError[] } = errorsRes.ok
 		? await errorsRes.json()
 		: { count: 0, items: [] };
@@ -80,10 +116,11 @@ export const load: PageServerLoad = async ({ cookies, locals, url }) => {
 
 	return {
 		devices,
-		errors: errors.items,
+		activityByDevice,
+		errorGroups: groupErrorsByDevice(errors.items),
 		errorCount: errors.count,
 		page,
 		pageCount,
-		loadFailed: !devicesRes.ok || !errorsRes.ok
+		loadFailed: !devicesRes.ok || !activityRes.ok || !errorsRes.ok
 	};
 };
