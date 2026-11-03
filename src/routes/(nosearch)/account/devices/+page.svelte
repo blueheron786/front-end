@@ -6,6 +6,11 @@
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
 	const { data, form } = $props();
+
+	function barHeight(results: number, daily: { results: number }[]) {
+		const max = Math.max(...daily.map((day) => day.results));
+		return max === 0 ? 0 : Math.max(2, Math.round((results / max) * 100));
+	}
 </script>
 
 <main class="flex w-full max-w-2xl flex-col gap-2 self-center px-6">
@@ -40,6 +45,42 @@
 						</span>
 						<span class="text-xs">
 							Last seen: {new Date(device.last_seen).toLocaleString()}
+						</span>
+						<dl class="mt-1 flex flex-row gap-4 text-xs">
+							<div>
+								<dt>Indexed, last hour</dt>
+								<dd class="text-base font-medium">
+									{device.results_last_hour.toLocaleString()}
+								</dd>
+							</div>
+							<div>
+								<dt>Last 24 hours</dt>
+								<dd class="text-base font-medium">
+									{device.results_last_24h.toLocaleString()}
+								</dd>
+							</div>
+							<div>
+								<dt>Lifetime</dt>
+								<dd class="text-base font-medium">
+									{device.results_total.toLocaleString()}
+								</dd>
+							</div>
+						</dl>
+						<div
+							class="mt-1 flex h-10 items-end gap-px"
+							role="img"
+							aria-label="Results indexed per day, last 30 days"
+						>
+							{#each device.results_daily as day (day.date)}
+								<div
+									class="bg-accent-text flex-1"
+									style:height="{barHeight(day.results, device.results_daily)}%"
+									title="{day.date}: {day.results.toLocaleString()}"
+								></div>
+							{/each}
+						</div>
+						<span class="text-xs">
+							Counted from when this feature was added; earlier results are not included.
 						</span>
 					</div>
 					<AlertDialog.Root>

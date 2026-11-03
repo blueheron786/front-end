@@ -10,6 +10,10 @@ type Device = {
 	friendly_name: string | null;
 	first_seen: string;
 	last_seen: string;
+	results_total: number;
+	results_last_hour: number;
+	results_last_24h: number;
+	results_daily: { date: string; results: number }[];
 };
 
 type CrawlerError = {
