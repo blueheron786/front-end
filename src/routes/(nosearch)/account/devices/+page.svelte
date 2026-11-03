@@ -4,13 +4,9 @@
 	import { Input } from '@/components/ui/input';
 	import { Label } from '@/components/ui/label';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
+	import { barHeight, tallestDay } from '$lib/devices';
 
 	const { data, form } = $props();
-
-	function barHeight(results: number, daily: { results: number }[]) {
-		const max = Math.max(...daily.map((day) => day.results));
-		return max === 0 ? 0 : Math.max(2, Math.round((results / max) * 100));
-	}
 </script>
 
 <main class="flex w-full max-w-2xl flex-col gap-2 self-center px-6">
@@ -50,7 +46,7 @@
 						{#if activity}
 							<dl class="mt-1 flex flex-row gap-4 text-xs">
 								<div>
-									<dt>Indexed, last hour</dt>
+									<dt>Submitted, last hour</dt>
 									<dd class="text-base font-medium">
 										{activity.results_last_hour.toLocaleString()}
 									</dd>
@@ -68,15 +64,16 @@
 									</dd>
 								</div>
 							</dl>
+							{@const tallest = tallestDay(activity.results_daily)}
 							<div
 								class="mt-1 flex h-10 items-end gap-px"
 								role="img"
-								aria-label="Results indexed per day, last 30 days"
+								aria-label="Results submitted per day, last 30 days"
 							>
 								{#each activity.results_daily as day (day.date)}
 									<div
 										class="bg-accent-text flex-1"
-										style:height="{barHeight(day.results, activity.results_daily)}%"
+										style:height="{barHeight(day.results, tallest)}%"
 										title="{day.date}: {day.results.toLocaleString()}"
 									></div>
 								{/each}
@@ -168,8 +165,8 @@
 									<AlertDialog.Header>
 										<AlertDialog.Title>Remove device</AlertDialog.Title>
 										<AlertDialog.Description>
-											This removes {device.friendly_name ?? device.hostname} from your list. Its results
-											stay counted, and it reappears if that crawler submits again.
+											This removes {device.friendly_name ?? device.hostname} from your list. Its history
+											is kept, and it reappears if that crawler submits again.
 										</AlertDialog.Description>
 									</AlertDialog.Header>
 									<AlertDialog.Footer>
@@ -197,10 +194,7 @@
 
 	{#if data.errorGroups.length > 0}
 		{#each data.errorGroups as group (group.name)}
-			<h4 class="mt-3 text-lg font-medium break-all">
-				{group.name}
-				<span class="text-sm font-normal">({group.items.length})</span>
-			</h4>
+			<h4 class="mt-3 text-lg font-medium break-all">{group.name}</h4>
 			<ul class="flex flex-col gap-2">
 				{#each group.items as error (error.id)}
 					<li class="bg-muted flex flex-col gap-1 p-4">

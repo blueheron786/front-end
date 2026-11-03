@@ -1,8 +1,12 @@
 import { API_BASE as API } from '$lib/api';
+import { groupErrorsByDevice } from '$lib/devices';
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 const ERRORS_PER_PAGE = 20;
+
+// Interpolated into an API path, so anything but digits could reach another endpoint.
+const DEVICE_ID = /^\d+$/;
 
 type Device = {
 	id: number;
@@ -38,7 +42,7 @@ export const actions: Actions = {
 		const deviceId = data.get('deviceId');
 		const deviceName = (data.get('deviceName') as string | null)?.trim();
 
-		if (!deviceId || !deviceName) {
+		if (typeof deviceId !== 'string' || !DEVICE_ID.test(deviceId) || !deviceName) {
 			return { success: false, error: 'Device ID and name are required.' };
 		}
 
@@ -62,7 +66,7 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const deviceId = data.get('deviceId');
 
-		if (!deviceId) {
+		if (typeof deviceId !== 'string' || !DEVICE_ID.test(deviceId)) {
 			return { success: false, error: 'Device ID is required.' };
 		}
 
@@ -110,20 +114,10 @@ export const load: PageServerLoad = async ({ cookies, locals, url }) => {
 		throw redirect(302, `?page=${pageCount}`);
 	}
 
-	// Newest-first within each group, and groups ordered by their newest error.
-	const groups = new Map<string, CrawlerError[]>();
-	for (const error of errors.items) {
-		groups.set(error.device_display_name, [
-			...(groups.get(error.device_display_name) ?? []),
-			error
-		]);
-	}
-	const errorGroups = [...groups].map(([name, items]) => ({ name, items }));
-
 	return {
 		devices,
 		activityByDevice,
-		errorGroups,
+		errorGroups: groupErrorsByDevice(errors.items),
 		errorCount: errors.count,
 		page,
 		pageCount,
