@@ -36,6 +36,7 @@
 	{#if data.devices.length > 0}
 		<ul class="flex flex-col gap-2">
 			{#each data.devices as device (device.id)}
+				{@const activity = data.activityByDevice[device.id]}
 				<li class="bg-muted flex flex-row items-center gap-2 p-4">
 					<div class="flex flex-1 flex-col gap-1">
 						<span class="font-medium">{device.friendly_name ?? device.hostname}</span>
@@ -46,93 +47,139 @@
 						<span class="text-xs">
 							Last seen: {new Date(device.last_seen).toLocaleString()}
 						</span>
-						<dl class="mt-1 flex flex-row gap-4 text-xs">
-							<div>
-								<dt>Indexed, last hour</dt>
-								<dd class="text-base font-medium">
-									{device.results_last_hour.toLocaleString()}
-								</dd>
-							</div>
-							<div>
-								<dt>Last 24 hours</dt>
-								<dd class="text-base font-medium">
-									{device.results_last_24h.toLocaleString()}
-								</dd>
-							</div>
-							<div>
-								<dt>Lifetime</dt>
-								<dd class="text-base font-medium">
-									{device.results_total.toLocaleString()}
-								</dd>
-							</div>
-						</dl>
-						<div
-							class="mt-1 flex h-10 items-end gap-px"
-							role="img"
-							aria-label="Results indexed per day, last 30 days"
-						>
-							{#each device.results_daily as day (day.date)}
-								<div
-									class="bg-accent-text flex-1"
-									style:height="{barHeight(day.results, device.results_daily)}%"
-									title="{day.date}: {day.results.toLocaleString()}"
-								></div>
-							{/each}
-						</div>
-						<span class="text-xs">
-							Counted from when this feature was added; earlier results are not included.
-						</span>
-					</div>
-					<AlertDialog.Root>
-						<AlertDialog.Trigger>
-							{#snippet child({ props })}
-								<Button
-									{...props}
-									variant="ghost"
-									size="icon"
-									class="ml-auto size-9"
-									aria-label="Rename device"
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-5 w-5"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
-										/>
-									</svg>
-								</Button>
-							{/snippet}
-						</AlertDialog.Trigger>
-						<AlertDialog.Content>
-							<form method="post" action="?/updateDevice">
-								<input type="hidden" name="deviceId" value={device.id} />
-								<AlertDialog.Header>
-									<AlertDialog.Title>Rename Device</AlertDialog.Title>
-									<AlertDialog.Description>
-										Give this device a friendly name (e.g., "My Laptop", "Work PC")
-									</AlertDialog.Description>
-								</AlertDialog.Header>
-								<div class="px-6 pb-2">
-									<Label for={`device-name-${device.id}`}>Device name</Label>
-									<Input
-										id={`device-name-${device.id}`}
-										name="deviceName"
-										type="text"
-										placeholder="e.g. My Laptop"
-										defaultValue={device.friendly_name ?? ''}
-										class="mt-1"
-									/>
+						{#if activity}
+							<dl class="mt-1 flex flex-row gap-4 text-xs">
+								<div>
+									<dt>Indexed, last hour</dt>
+									<dd class="text-base font-medium">
+										{activity.results_last_hour.toLocaleString()}
+									</dd>
 								</div>
-								<AlertDialog.Footer>
-									<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-									<AlertDialog.Action type="submit">Save name</AlertDialog.Action>
-								</AlertDialog.Footer>
-							</form>
-						</AlertDialog.Content>
-					</AlertDialog.Root>
+								<div>
+									<dt>Last 24 hours</dt>
+									<dd class="text-base font-medium">
+										{activity.results_last_24h.toLocaleString()}
+									</dd>
+								</div>
+								<div>
+									<dt>Lifetime</dt>
+									<dd class="text-base font-medium">
+										{activity.results_total.toLocaleString()}
+									</dd>
+								</div>
+							</dl>
+							<div
+								class="mt-1 flex h-10 items-end gap-px"
+								role="img"
+								aria-label="Results indexed per day, last 30 days"
+							>
+								{#each activity.results_daily as day (day.date)}
+									<div
+										class="bg-accent-text flex-1"
+										style:height="{barHeight(day.results, activity.results_daily)}%"
+										title="{day.date}: {day.results.toLocaleString()}"
+									></div>
+								{/each}
+							</div>
+							<span class="text-xs">
+								Counted from when this feature was added; earlier results are not included.
+							</span>
+						{/if}
+					</div>
+					<div class="ml-auto flex flex-col gap-1">
+						<AlertDialog.Root>
+							<AlertDialog.Trigger>
+								{#snippet child({ props })}
+									<Button
+										{...props}
+										variant="ghost"
+										size="icon"
+										class="size-9"
+										aria-label="Rename device"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-5 w-5"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+											/>
+										</svg>
+									</Button>
+								{/snippet}
+							</AlertDialog.Trigger>
+							<AlertDialog.Content>
+								<form method="post" action="?/updateDevice">
+									<input type="hidden" name="deviceId" value={device.id} />
+									<AlertDialog.Header>
+										<AlertDialog.Title>Rename Device</AlertDialog.Title>
+										<AlertDialog.Description>
+											Give this device a friendly name (e.g., "My Laptop", "Work PC")
+										</AlertDialog.Description>
+									</AlertDialog.Header>
+									<div class="px-6 pb-2">
+										<Label for={`device-name-${device.id}`}>Device name</Label>
+										<Input
+											id={`device-name-${device.id}`}
+											name="deviceName"
+											type="text"
+											placeholder="e.g. My Laptop"
+											defaultValue={device.friendly_name ?? ''}
+											class="mt-1"
+										/>
+									</div>
+									<AlertDialog.Footer>
+										<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+										<AlertDialog.Action type="submit">Save name</AlertDialog.Action>
+									</AlertDialog.Footer>
+								</form>
+							</AlertDialog.Content>
+						</AlertDialog.Root>
+						<AlertDialog.Root>
+							<AlertDialog.Trigger>
+								{#snippet child({ props })}
+									<Button
+										{...props}
+										variant="ghost"
+										size="icon"
+										class="size-9"
+										aria-label="Remove device"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-5 w-5"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+												clip-rule="evenodd"
+											/>
+										</svg>
+									</Button>
+								{/snippet}
+							</AlertDialog.Trigger>
+							<AlertDialog.Content>
+								<form method="post" action="?/hideDevice">
+									<input type="hidden" name="deviceId" value={device.id} />
+									<AlertDialog.Header>
+										<AlertDialog.Title>Remove device</AlertDialog.Title>
+										<AlertDialog.Description>
+											This removes {device.friendly_name ?? device.hostname} from your list. Its results
+											stay counted, and it reappears if that crawler submits again.
+										</AlertDialog.Description>
+									</AlertDialog.Header>
+									<AlertDialog.Footer>
+										<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+										<AlertDialog.Action type="submit">Remove</AlertDialog.Action>
+									</AlertDialog.Footer>
+								</form>
+							</AlertDialog.Content>
+						</AlertDialog.Root>
+					</div>
 				</li>
 			{/each}
 		</ul>
