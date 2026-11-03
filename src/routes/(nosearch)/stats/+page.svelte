@@ -20,14 +20,17 @@
 		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 	}
 
+	// Only ever destroyed; each chart has its own type parameters, so a bare Chart accepts none of them.
+	type ChartInstance = Pick<Chart, 'destroy'>;
+
 	// Chart instances
-	let resultsIndexedChart: Chart | null = null;
-	let usersCrawledChart: Chart | null = null;
-	let topUsersChart: Chart | null = null;
-	let datasetQueriesChart: Chart | null = null;
-	let datasetResultsChart: Chart | null = null;
-	let indexGrowthCharts: Chart[] = [];
-	let registeredWeeklyChart: Chart | null = null;
+	let resultsIndexedChart: ChartInstance | null = null;
+	let usersCrawledChart: ChartInstance | null = null;
+	let topUsersChart: ChartInstance | null = null;
+	let datasetQueriesChart: ChartInstance | null = null;
+	let datasetResultsChart: ChartInstance | null = null;
+	let indexGrowthCharts: ChartInstance[] = [];
+	let registeredWeeklyChart: ChartInstance | null = null;
 
 	// Canvas refs
 	let resultsIndexedCanvas: HTMLCanvasElement;
