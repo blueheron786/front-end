@@ -1,27 +1,50 @@
+export type Device = {
+	id: number;
+	hostname: string;
+	friendly_name: string | null;
+	// Absent from an API that predates it, and null until the crawler reports one.
+	crawler_version?: string | null;
+	first_seen: string;
+	last_seen: string;
+};
+
 export type DayResults = { date: string; results: number };
 
-/** A day's bar as a percentage of the tallest day; a day with results is never drawn as nothing. */
-export function barHeight(results: number, tallest: number): number {
-	if (results === 0) return 0;
-	return Math.max(2, Math.round((results / tallest) * 100));
+export type DeviceActivity = {
+	device_id: number;
+	results_total: number;
+	results_last_hour: number;
+	results_last_24h: number;
+	results_daily: DayResults[];
+};
+
+export type CrawlerError = {
+	id: number;
+	device_name: string;
+	device_display_name: string;
+	context: string;
+	exception_type: string;
+	message: string;
+	location: string;
+	crawler_version: string;
+	created_at: string;
+};
+
+/** Why a request for the user's devices failed: the API refuses unverified accounts with 403. */
+export type LoadProblem = 'unverified' | 'unavailable';
+
+export function loadProblem(status: number): LoadProblem {
+	return status === 403 ? 'unverified' : 'unavailable';
 }
 
-export function tallestDay(daily: DayResults[]): number {
-	return Math.max(...daily.map((day) => day.results));
+export function deviceName(device: Pick<Device, 'hostname' | 'friendly_name'>): string {
+	return device.friendly_name ?? device.hostname;
 }
 
-/** Groups by display name, in order of each group's first (newest) error. */
-export function groupErrorsByDevice<T extends { device_display_name: string }>(
-	errors: T[]
-): { name: string; items: T[] }[] {
-	const groups = new Map<string, T[]>();
-	for (const error of errors) {
-		const items = groups.get(error.device_display_name);
-		if (items) {
-			items.push(error);
-		} else {
-			groups.set(error.device_display_name, [error]);
-		}
-	}
-	return [...groups].map(([name, items]) => ({ name, items }));
+/** Errors are recorded under the crawler's hostname, which is what a device is keyed on. */
+export function errorsForDevice<T extends { device_name: string }>(
+	errors: T[],
+	device: Pick<Device, 'hostname'>
+): T[] {
+	return errors.filter((error) => error.device_name === device.hostname);
 }
