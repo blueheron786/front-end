@@ -1,53 +1,33 @@
 import { describe, expect, it } from 'vitest';
 
-import { barHeight, groupErrorsByDevice, tallestDay } from './devices';
+import { deviceName, errorsForDevice, loadProblem } from './devices';
 
-describe('barHeight', () => {
-	it('draws a day with no results as nothing', () => {
-		expect(barHeight(0, 100)).toBe(0);
-	});
-
-	it('draws the tallest day full height', () => {
-		expect(barHeight(100, 100)).toBe(100);
-	});
-
-	it('keeps a tiny non-zero day visible', () => {
-		expect(barHeight(1, 10000)).toBe(2);
+describe('loadProblem', () => {
+	it('blames the email address only when the API refuses the account', () => {
+		expect(loadProblem(403)).toBe('unverified');
+		expect(loadProblem(404)).toBe('unavailable');
+		expect(loadProblem(500)).toBe('unavailable');
 	});
 });
 
-describe('tallestDay', () => {
-	it('is the largest daily count', () => {
-		expect(
-			tallestDay([
-				{ date: '2026-11-01', results: 3 },
-				{ date: '2026-11-02', results: 9 }
-			])
-		).toBe(9);
+describe('deviceName', () => {
+	it('prefers the friendly name', () => {
+		expect(deviceName({ hostname: 'blue-heron-2', friendly_name: 'Office' })).toBe('Office');
 	});
 
-	it('is zero when nothing was submitted', () => {
-		expect(tallestDay([{ date: '2026-11-01', results: 0 }])).toBe(0);
+	it('falls back to the hostname', () => {
+		expect(deviceName({ hostname: 'blue-heron-2', friendly_name: null })).toBe('blue-heron-2');
 	});
 });
 
-describe('groupErrorsByDevice', () => {
-	const error = (id: number, name: string) => ({ id, device_display_name: name });
+describe('errorsForDevice', () => {
+	it('keeps only the errors reported under the device hostname, in order', () => {
+		const errors = [
+			{ id: 3, device_name: 'blue-heron-2' },
+			{ id: 2, device_name: 'other' },
+			{ id: 1, device_name: 'blue-heron-2' }
+		];
 
-	it('groups by display name, ordered by each group newest error', () => {
-		const groups = groupErrorsByDevice([
-			error(5, 'Office'),
-			error(4, 'blue-heron-2'),
-			error(3, 'Office'),
-			error(2, 'blue-heron-2')
-		]);
-
-		expect(groups.map((group) => group.name)).toEqual(['Office', 'blue-heron-2']);
-		expect(groups[0].items.map((e) => e.id)).toEqual([5, 3]);
-		expect(groups[1].items.map((e) => e.id)).toEqual([4, 2]);
-	});
-
-	it('gives no groups for no errors', () => {
-		expect(groupErrorsByDevice([])).toEqual([]);
+		expect(errorsForDevice(errors, { hostname: 'blue-heron-2' }).map((e) => e.id)).toEqual([3, 1]);
 	});
 });
