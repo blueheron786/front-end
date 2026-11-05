@@ -144,9 +144,11 @@ export const load: PageServerLoad = async ({ fetch }) => {
 	const latestDatasetQueries = stats.dataset_queries_daily[latestDate] || 0;
 	const latestDatasetResults = stats.dataset_results_daily[latestDate] || 0;
 
-	// Top users data for horizontal bar chart (from all-time leaderboard)
-	const topUsersLabels = allTimeLeaderboard.map((u) => u.username);
-	const topUsersData = allTimeLeaderboard.map((u) => u.score);
+	// Top users data for horizontal bar chart: the ten highest all-time users.
+	// The full leaderboard is shown in a table elsewhere.
+	const topContributors = allTimeLeaderboard.slice(0, 10);
+	const topUsersLabels = topContributors.map((u) => u.username);
+	const topUsersData = topContributors.map((u) => u.score);
 
 	return {
 		topUsers: {

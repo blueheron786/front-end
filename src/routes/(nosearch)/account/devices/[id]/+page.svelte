@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Button } from '@/components/ui/button';
 	import * as Card from '@/components/ui/card';
 	import { Input } from '@/components/ui/input';
@@ -8,8 +9,86 @@
 
 	const { data, form } = $props();
 
-	// The API lists days oldest first.
-	const days = $derived([...(data.activity?.results_daily ?? [])].reverse());
+	// The API lists days oldest first, which is the order the chart draws them.
+	const days = $derived(data.activity?.results_daily ?? []);
+
+	let canvas: HTMLCanvasElement | undefined = $state();
+	let isDark = $state(false);
+
+	// Chart.js takes its colours as options, so a theme change means rebuilding the chart.
+	onMount(() => {
+		const root = document.documentElement;
+		const sync = () => (isDark = root.classList.contains('dark'));
+		sync();
+		const observer = new MutationObserver(sync);
+		observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+		return () => observer.disconnect();
+	});
+
+	$effect(() => {
+		if (!canvas) return;
+
+		const currentDays = days;
+		const target = canvas;
+		const textColor = isDark ? '#e5e7eb' : '#374151';
+		const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+		let chart: { destroy: () => void } | undefined;
+		// The import is async, so the effect can be torn down before it resolves.
+		let cancelled = false;
+
+		(async () => {
+			const { default: Chart } = await import('chart.js/auto');
+			if (cancelled) return;
+
+			Chart.defaults.font.size = 12;
+			Chart.defaults.color = textColor;
+
+			chart = new Chart(target, {
+				type: 'bar',
+				data: {
+					labels: currentDays.map((day) => day.date),
+					datasets: [
+						{
+							label: 'Results returned',
+							data: currentDays.map((day) => day.results),
+							backgroundColor: 'rgba(59, 130, 246, 0.8)',
+							borderRadius: 2
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: { display: false },
+						tooltip: {
+							callbacks: {
+								label: (item) => `${Number(item.parsed.y).toLocaleString()} results`
+							}
+						}
+					},
+					scales: {
+						x: { grid: { display: false }, ticks: { color: textColor } },
+						y: {
+							beginAtZero: true,
+							ticks: {
+								color: textColor,
+								precision: 0,
+								callback: (value) => Number(value).toLocaleString()
+							},
+							grid: { color: gridColor }
+						}
+					}
+				}
+			});
+		})();
+
+		return () => {
+			cancelled = true;
+			chart?.destroy();
+		};
+	});
 </script>
 
 <main class="flex w-full max-w-4xl flex-col gap-2 self-center px-6">
@@ -170,24 +249,26 @@
 					</dd>
 				</div>
 			</dl>
-			<div class="overflow-x-auto">
-				<table class="w-full min-w-[20rem] border-collapse text-left tabular-nums">
-					<thead class="bg-muted">
-						<tr>
-							<th class="px-4 py-3">Statistics date</th>
-							<th class="px-4 py-3 text-right">Results returned</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each days as day (day.date)}
-							<tr class="border-b">
-								<td class="px-4 py-3">{day.date}</td>
-								<td class="px-4 py-3 text-right">{day.results.toLocaleString()}</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
+			<div class="h-64 w-full" role="img" aria-label="Bar chart of results returned per day">
+				<canvas bind:this={canvas} class="h-full w-full"></canvas>
 			</div>
+			<table class="sr-only">
+				<caption>Results returned per day</caption>
+				<thead>
+					<tr>
+						<th scope="col">Date</th>
+						<th scope="col">Results</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each days as day (day.date)}
+						<tr>
+							<td>{day.date}</td>
+							<td>{day.results.toLocaleString()}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
 			<p class="text-xs">
 				Counted from when this feature was added; earlier results are not included.
 			</p>
