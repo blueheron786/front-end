@@ -224,18 +224,13 @@ export const load: PageServerLoad = async ({ cookies, locals }) => {
 			awaitingEmailConfirmation: true,
 			accountMessage: locals.accountMessage,
 			username: cookies.get('username'),
-			votes: undefined,
 			hasAgreedToTerms: false,
 			apiKeys: [] as ApiKey[],
 			marketingOptIn: false,
 			profile: null as UserProfile | null
 		};
 	} else {
-		const [votesRes, agreementsRes, keysRes, consentRes, profileRes] = await Promise.all([
-			fetch(`${API}/api/v1/platform/search-results/my-votes?limit=100&offset=0`, {
-				method: 'GET',
-				headers: { Authorization: 'Bearer ' + cookies.get('accessToken') }
-			}),
+		const [agreementsRes, keysRes, consentRes, profileRes] = await Promise.all([
 			fetch(`${API}/api/v1/platform/agreements/`, {
 				method: 'GET',
 				headers: { Authorization: 'Bearer ' + cookies.get('accessToken') }
@@ -253,16 +248,6 @@ export const load: PageServerLoad = async ({ cookies, locals }) => {
 				headers: { Authorization: 'Bearer ' + cookies.get('accessToken') }
 			})
 		]);
-
-		const votesJson: {
-			count: number;
-			items: Array<{
-				url: string;
-				query: string;
-				vote_type: 'upvote' | 'downvote';
-				timestamp: string;
-			}>;
-		} = await votesRes.json();
 
 		const agreements: Agreement[] = agreementsRes.ok ? await agreementsRes.json() : [];
 		const hasAgreedToTerms = agreements.some((a) => a.agreement_type === 'TERMS_OF_SERVICE_GUI');
@@ -284,7 +269,6 @@ export const load: PageServerLoad = async ({ cookies, locals }) => {
 			awaitingEmailConfirmation: false,
 			accountMessage: locals.accountMessage,
 			username: cookies.get('username'),
-			votes: votesJson,
 			hasAgreedToTerms,
 			apiKeys,
 			marketingOptIn,

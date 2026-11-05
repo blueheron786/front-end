@@ -71,6 +71,23 @@ export const load: PageServerLoad = async ({ cookies, locals }) => {
 		console.error('Error fetching user profile:', err);
 	}
 
+	// Months the user has paid for a membership at any tier, or null if that couldn't be fetched.
+	let supporterMonths: number | null = null;
+	try {
+		const supporterRes = await fetch(`${API_BASE}/api/v1/platform/membership/supporter-history`, {
+			headers: {
+				Authorization: `Bearer ${accessToken}`
+			}
+		});
+		if (supporterRes.ok) {
+			supporterMonths = (await supporterRes.json()).months;
+		} else {
+			console.error(`Failed to fetch supporter history: ${supporterRes.status}`);
+		}
+	} catch (err) {
+		console.error('Error fetching supporter history:', err);
+	}
+
 	const indexDaily = userStats.results_indexed_daily || {};
 	const totalIndexed = Object.values(indexDaily).reduce((sum, v) => sum + v, 0);
 
@@ -97,6 +114,7 @@ export const load: PageServerLoad = async ({ cookies, locals }) => {
 		chartData: {
 			indexed: indexedData
 		},
-		dateJoined
+		dateJoined,
+		supporterMonths
 	};
 };
