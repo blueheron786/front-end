@@ -160,6 +160,23 @@
 			<div class="h-64 w-full" role="img" aria-label="Bar chart of results indexed per day">
 				<canvas bind:this={canvas} class="h-full w-full"></canvas>
 			</div>
+			<table class="sr-only">
+				<caption>Results indexed per day</caption>
+				<thead>
+					<tr>
+						<th scope="col">Date</th>
+						<th scope="col">Results indexed</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each data.chartLabels as label, i (label)}
+						<tr>
+							<td>{label}</td>
+							<td>{data.chartData.indexed[i].toLocaleString()}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
 		</div>
 	</main>
 </div>

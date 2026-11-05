@@ -252,6 +252,23 @@
 			<div class="h-64 w-full" role="img" aria-label="Bar chart of results returned per day">
 				<canvas bind:this={canvas} class="h-full w-full"></canvas>
 			</div>
+			<table class="sr-only">
+				<caption>Results returned per day</caption>
+				<thead>
+					<tr>
+						<th scope="col">Date</th>
+						<th scope="col">Results</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each days as day (day.date)}
+						<tr>
+							<td>{day.date}</td>
+							<td>{day.results.toLocaleString()}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
 			<p class="text-xs">
 				Counted from when this feature was added; earlier results are not included.
 			</p>
