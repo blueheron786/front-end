@@ -1,14 +1,81 @@
-<script>
+<script lang="ts">
+	import { onDestroy, onMount } from 'svelte';
 	import { describeMonths, wholeMonthsBetween } from '$lib/member-duration';
 
 	export let data;
 
-	// Compute a scale so the tallest day fills the chart container.
-	$: maxIndexed = Math.max(...data.chartData.indexed, 1);
-	$: scaledIndexed = data.chartData.indexed.map((v) => (v / maxIndexed) * 100);
-
 	$: joined = data.dateJoined ? new Date(data.dateJoined) : null;
 	$: signedUpAgo = joined ? describeMonths(wholeMonthsBetween(joined, new Date())) : null;
+
+	let canvas: HTMLCanvasElement | undefined;
+	let chart: { destroy: () => void } | undefined;
+	let destroyed = false;
+
+	// Chart.js takes its colours as options, so a theme change means rebuilding the chart.
+	async function drawChart() {
+		const { default: Chart } = await import('chart.js/auto');
+		// The import is async, so the component may be gone before it resolves.
+		if (destroyed || !canvas) return;
+
+		const isDark = document.documentElement.classList.contains('dark');
+		const textColor = isDark ? '#e5e7eb' : '#374151';
+		const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+		chart?.destroy();
+		chart = new Chart(canvas, {
+			type: 'bar',
+			data: {
+				labels: data.chartLabels,
+				datasets: [
+					{
+						label: 'Results indexed',
+						data: data.chartData.indexed,
+						backgroundColor: isDark ? 'rgba(37, 99, 235, 0.9)' : 'rgba(59, 130, 246, 0.9)',
+						borderRadius: 2
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							label: (item) => `${Number(item.parsed.y).toLocaleString()} results`
+						}
+					}
+				},
+				scales: {
+					x: {
+						grid: { display: false },
+						ticks: { color: textColor, maxTicksLimit: 8 }
+					},
+					y: {
+						beginAtZero: true,
+						ticks: {
+							color: textColor,
+							precision: 0,
+							callback: (value) => Number(value).toLocaleString()
+						},
+						grid: { color: gridColor }
+					}
+				}
+			}
+		});
+	}
+
+	onMount(() => {
+		drawChart();
+		const observer = new MutationObserver(drawChart);
+		observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+		return () => observer.disconnect();
+	});
+
+	onDestroy(() => {
+		destroyed = true;
+		chart?.destroy();
+	});
 </script>
 
 <div class="min-h-screen">
@@ -90,22 +157,8 @@
 			<h2 class="mb-4 text-lg font-medium text-gray-500 dark:text-gray-400">
 				Results Indexed Per Day (Last 30 Days)
 			</h2>
-			<div class="flex h-64 w-full items-end gap-1">
-				{#each data.chartLabels as label, i}
-					<div
-						class="flex h-64 min-w-0 flex-1 flex-col items-center justify-end"
-						title="{label}: {data.chartData.indexed[i]}"
-					>
-						<div
-							class="w-full rounded-t bg-blue-500 dark:bg-blue-600"
-							style="height: {scaledIndexed[i] || 0}%; min-height: 16px"
-						></div>
-					</div>
-				{/each}
-			</div>
-			<div class="mt-2 flex justify-between text-gray-500 dark:text-gray-400">
-				<span>{data.chartLabels[0]}</span>
-				<span>{data.chartLabels[data.chartLabels.length - 1]}</span>
+			<div class="h-64 w-full" role="img" aria-label="Bar chart of results indexed per day">
+				<canvas bind:this={canvas} class="h-full w-full"></canvas>
 			</div>
 		</div>
 	</main>
