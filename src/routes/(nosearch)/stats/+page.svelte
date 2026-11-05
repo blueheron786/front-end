@@ -248,7 +248,7 @@
 								grid: { color: gridColor }
 							},
 							y: {
-								ticks: { color: textColor, font: { size: 11 } },
+								ticks: { color: textColor, font: { size: 11 }, autoSkip: false },
 								grid: { color: gridColor }
 							}
 						}
