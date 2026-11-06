@@ -607,44 +607,6 @@
 		<!-- Overview Tab -->
 		<TabsContent value="overview" class="space-y-6">
 			<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-				<h2 class="mb-4 text-xl font-semibold">Index Statistics</h2>
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<div>
-						<h3 class="font-medium text-gray-700 dark:text-gray-300">Pages in Index</h3>
-						<p class="text-2xl font-bold text-purple-600">
-							{formatNumber(data.latest.urlsInIndex)}
-						</p>
-						<p class="text-sm text-gray-500 dark:text-gray-400">Unique, searchable pages</p>
-					</div>
-					<div>
-						<h3 class="font-medium text-gray-700 dark:text-gray-300">Domains in Index</h3>
-						<p class="text-2xl font-bold text-pink-600">
-							{formatNumber(data.latest.domainsInIndex)}
-						</p>
-						<p class="text-sm text-gray-500 dark:text-gray-400">Unique domains represented</p>
-					</div>
-					<div>
-						<h3 class="font-medium text-gray-700 dark:text-gray-300">Index Entries</h3>
-						<p class="text-2xl font-bold text-orange-600">
-							{formatNumber(data.latest.resultsInIndex)}
-						</p>
-						<p class="text-sm text-gray-500 dark:text-gray-400">
-							Pages counted once per term they are indexed under
-						</p>
-					</div>
-					<div>
-						<h3 class="font-medium text-gray-700 dark:text-gray-300">Avg Pages per Domain</h3>
-						<p class="text-2xl font-bold text-indigo-600">
-							{data.latest.domainsInIndex > 0
-								? formatNumber(Math.round(data.latest.urlsInIndex / data.latest.domainsInIndex))
-								: 0}
-						</p>
-						<p class="text-sm text-gray-500 dark:text-gray-400">Average unique pages per domain</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
 				<h2 class="mb-4 text-xl font-semibold">Crawler Network (Last 30 Days)</h2>
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div>
